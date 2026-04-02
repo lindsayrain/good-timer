@@ -1,22 +1,70 @@
 import SwiftUI
 
+// MARK: - Theme
+
+struct AppTheme {
+    let isDark: Bool
+    let bg: Color
+    let cardTop: Color
+    let cardMid: Color
+    let cardBottom: Color
+    let divider: Color
+    let highlight: Color
+    let cardShadow: Color
+    let separator: Color
+    let label: Color
+    let dim: Color
+    let digitNormal: Color
+    let progressTrack: Color
+    let controlBg: Color
+
+    static let dark = AppTheme(
+        isDark: true,
+        bg:            Color(red: 0.06,  green: 0.06,  blue: 0.08),
+        cardTop:       Color(red: 0.17,  green: 0.17,  blue: 0.20),
+        cardMid:       Color(red: 0.135, green: 0.135, blue: 0.16),
+        cardBottom:    Color(red: 0.10,  green: 0.10,  blue: 0.12),
+        divider:       Color(red: 0.03,  green: 0.03,  blue: 0.04),
+        highlight:     Color.white.opacity(0.15),
+        cardShadow:    Color.black.opacity(0.55),
+        separator:     Color(red: 0.50,  green: 0.50,  blue: 0.55),
+        label:         Color(red: 0.45,  green: 0.45,  blue: 0.50),
+        dim:           Color(red: 0.40,  green: 0.40,  blue: 0.45),
+        digitNormal:   Color(red: 0.95,  green: 0.95,  blue: 0.92),
+        progressTrack: Color.white.opacity(0.07),
+        controlBg:     Color.white.opacity(0.06)
+    )
+
+    static let light = AppTheme(
+        isDark: false,
+        bg:            Color(red: 0.90,  green: 0.89,  blue: 0.87),
+        cardTop:       Color(red: 0.98,  green: 0.97,  blue: 0.96),
+        cardMid:       Color(red: 0.88,  green: 0.87,  blue: 0.85),
+        cardBottom:    Color(red: 0.78,  green: 0.77,  blue: 0.75),
+        divider:       Color(red: 0.65,  green: 0.64,  blue: 0.62),
+        highlight:     Color.white.opacity(0.60),
+        cardShadow:    Color.black.opacity(0.15),
+        separator:     Color(red: 0.50,  green: 0.49,  blue: 0.47),
+        label:         Color(red: 0.50,  green: 0.49,  blue: 0.47),
+        dim:           Color(red: 0.50,  green: 0.49,  blue: 0.47),
+        digitNormal:   Color(red: 0.14,  green: 0.13,  blue: 0.12),
+        progressTrack: Color.black.opacity(0.08),
+        controlBg:     Color.black.opacity(0.06)
+    )
+}
+
 // MARK: - Layout constants (shared across all components)
+
 enum ClockLayout {
     static let cardW: CGFloat = 100
     static let halfH: CGFloat = 62
-    static let cardH: CGFloat = halfH * 2 + 2   // 126, includes 2pt divider gap
-    static let digitGap: CGFloat = 6             // between two digits in a pair
-    static let pairW: CGFloat = cardW * 2 + digitGap  // 206
-    static let sepW: CGFloat = 40               // separator (colon) area width
+    static let cardH: CGFloat = halfH * 2 + 2
+    static let digitGap: CGFloat = 6
+    static let pairW: CGFloat = cardW * 2 + digitGap
+    static let sepW: CGFloat = 40
     static let fontSize: CGFloat = 76
     static let corner: CGFloat = 10
 }
-
-// MARK: - Colors
-
-private let cardBG     = Color(red: 0.13, green: 0.13, blue: 0.16)
-private let dividerCol = Color(red: 0.05, green: 0.05, blue: 0.07)
-private let shadowCol  = Color.black.opacity(0.55)
 
 // MARK: - Single half-card (top or bottom)
 
@@ -24,6 +72,7 @@ private struct HalfCard: View {
     let digit: Int
     let isTop: Bool
     let digitColor: Color
+    let theme: AppTheme
 
     var body: some View {
         let W = ClockLayout.cardW
@@ -32,32 +81,28 @@ private struct HalfCard: View {
         let R = ClockLayout.corner
 
         ZStack {
-            // Background with correct corner rounding
             UnevenRoundedRectangle(
                 topLeadingRadius: isTop ? R : 0,
                 bottomLeadingRadius: isTop ? 0 : R,
                 bottomTrailingRadius: isTop ? 0 : R,
                 topTrailingRadius: isTop ? R : 0
             )
-            .fill(cardBG)
+            .fill(LinearGradient(
+                colors: isTop ? [theme.cardTop, theme.cardMid] : [theme.cardMid, theme.cardBottom],
+                startPoint: .top,
+                endPoint: .bottom
+            ))
 
-            // Digit clipped to this half
             Text(String(digit))
-                .font(.system(size: F, weight: .bold, design: .monospaced))
+                .font(.system(size: F, weight: .black, design: .default))
                 .foregroundColor(digitColor)
                 .offset(y: isTop ? H / 2 : -H / 2)
                 .frame(width: W, height: H * 2)
                 .clipped()
-
-            // Divider line on the cut edge
-            Rectangle()
-                .fill(dividerCol)
-                .frame(height: 1.5)
-                .frame(maxHeight: .infinity, alignment: isTop ? .bottom : .top)
         }
         .frame(width: W, height: H)
         .shadow(
-            color: isTop ? Color.clear : shadowCol,
+            color: isTop ? Color.clear : theme.cardShadow,
             radius: 6, x: 0, y: 4
         )
     }
@@ -69,52 +114,50 @@ struct FlipCard: View {
     let digit: Int
     let prevDigit: Int
     let digitColor: Color
+    let theme: AppTheme
 
     @State private var flipping = false
-    @State private var progress: CGFloat = 0
+    @State private var upperFlapDeg: Double = 0   // 0 → -90 (pivot: bottom = centerline)
+    @State private var lowerFlapDeg: Double = 90  // 90 → 0  (pivot: top  = centerline)
     @State private var flapOld: Int = 0
     @State private var flapNew: Int = 0
 
     var body: some View {
         let W = ClockLayout.cardW
         let H = ClockLayout.halfH
-        let gap = CGFloat(2)
+        let gap = CGFloat(4)
 
         ZStack(alignment: .top) {
-            // --- Static background ---
-            // Top half: always shows NEW digit
-            HalfCard(digit: digit, isTop: true, digitColor: digitColor)
+            // Static top: always shows new digit (revealed as upper flap folds away)
+            HalfCard(digit: digit, isTop: true, digitColor: digitColor, theme: theme)
 
-            // Bottom half: shows OLD digit until flip reaches halfway, then NEW
-            HalfCard(digit: flipping ? flapOld : digit, isTop: false, digitColor: digitColor)
+            // Static bottom: shows old digit during flip, new digit at rest
+            HalfCard(digit: flipping ? flapOld : digit, isTop: false, digitColor: digitColor, theme: theme)
                 .offset(y: H + gap)
 
-            // --- Animated flap ---
             if flipping {
-                Group {
-                    if progress <= 0.5 {
-                        // Front of flap: old digit top, rotating 0→-90°
-                        HalfCard(digit: flapOld, isTop: true, digitColor: digitColor)
-                            .rotation3DEffect(
-                                .degrees(-180 * Double(progress)),
-                                axis: (1, 0, 0),
-                                anchor: .bottom,
-                                anchorZ: 0,
-                                perspective: 0.5
-                            )
-                    } else {
-                        // Back of flap: new digit top, rotating +90→0°
-                        HalfCard(digit: flapNew, isTop: true, digitColor: digitColor)
-                            .rotation3DEffect(
-                                .degrees(-180 * Double(progress) + 180),
-                                axis: (1, 0, 0),
-                                anchor: .bottom,
-                                anchorZ: 0,
-                                perspective: 0.5
-                            )
-                    }
-                }
-                .zIndex(2)
+                // Lower flap: NEW digit bottom half — starts edge-on (90°), unfolds to flat (0°)
+                HalfCard(digit: flapNew, isTop: false, digitColor: digitColor, theme: theme)
+                    .rotation3DEffect(
+                        .degrees(lowerFlapDeg),
+                        axis: (1, 0, 0),
+                        anchor: .top,
+                        anchorZ: 0,
+                        perspective: 0.5
+                    )
+                    .offset(y: H + gap)
+                    .zIndex(2)
+
+                // Upper flap: OLD digit top half — starts flat (0°), folds to edge-on (-90°)
+                HalfCard(digit: flapOld, isTop: true, digitColor: digitColor, theme: theme)
+                    .rotation3DEffect(
+                        .degrees(upperFlapDeg),
+                        axis: (1, 0, 0),
+                        anchor: .bottom,
+                        anchorZ: 0,
+                        perspective: 0.5
+                    )
+                    .zIndex(3)
             }
         }
         .frame(width: W, height: H * 2 + gap)
@@ -123,11 +166,14 @@ struct FlipCard: View {
             flapOld = prevDigit
             flapNew = newVal
             flipping = true
-            progress = 0
-            withAnimation(.linear(duration: 0.3)) {
-                progress = 1.0
+            upperFlapDeg = 0
+            lowerFlapDeg = 90
+
+            withAnimation(.easeInOut(duration: 0.45)) {
+                upperFlapDeg = -90
+                lowerFlapDeg = 0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.31) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.47) {
                 flipping = false
             }
         }
@@ -137,14 +183,15 @@ struct FlipCard: View {
 // MARK: - Separator (colon dots)
 
 struct ClockSeparator: View {
+    let theme: AppTheme
     @State private var on = true
 
     var body: some View {
         let dot = ClockLayout.halfH * 0.14
 
         VStack(spacing: ClockLayout.halfH * 0.22) {
-            Circle().fill(Color(red: 0.5, green: 0.5, blue: 0.55)).frame(width: dot, height: dot)
-            Circle().fill(Color(red: 0.5, green: 0.5, blue: 0.55)).frame(width: dot, height: dot)
+            Circle().fill(theme.separator).frame(width: dot, height: dot)
+            Circle().fill(theme.separator).frame(width: dot, height: dot)
         }
         .frame(width: ClockLayout.sepW)
         .opacity(on ? 1 : 0.25)
@@ -161,13 +208,14 @@ struct ClockSeparator: View {
 struct FlipClockDisplay: View {
     @ObservedObject var vm: TimerViewModel
     let digitColor: Color
+    let theme: AppTheme
 
     var body: some View {
         HStack(spacing: 0) {
             digitPair(a: 0, b: 1)
-            ClockSeparator()
+            ClockSeparator(theme: theme)
             digitPair(a: 2, b: 3)
-            ClockSeparator()
+            ClockSeparator(theme: theme)
             digitPair(a: 4, b: 5)
         }
     }
@@ -175,17 +223,17 @@ struct FlipClockDisplay: View {
     @ViewBuilder
     private func digitPair(a: Int, b: Int) -> some View {
         HStack(spacing: ClockLayout.digitGap) {
-            FlipCard(digit: vm.digits[a], prevDigit: vm.previousDigits[a], digitColor: digitColor)
-            FlipCard(digit: vm.digits[b], prevDigit: vm.previousDigits[b], digitColor: digitColor)
+            FlipCard(digit: vm.digits[a], prevDigit: vm.previousDigits[a], digitColor: digitColor, theme: theme)
+            FlipCard(digit: vm.digits[b], prevDigit: vm.previousDigits[b], digitColor: digitColor, theme: theme)
         }
         .frame(width: ClockLayout.pairW)
     }
 }
 
-// MARK: - Unit labels (must align with FlipClockDisplay)
+// MARK: - Unit labels
 
 struct UnitLabels: View {
-    private let labelColor = Color(red: 0.45, green: 0.45, blue: 0.5)
+    let theme: AppTheme
 
     var body: some View {
         HStack(spacing: 0) {
@@ -199,7 +247,7 @@ struct UnitLabels: View {
                 .frame(width: ClockLayout.pairW)
         }
         .font(.system(size: 11, weight: .medium, design: .monospaced))
-        .foregroundColor(labelColor)
+        .foregroundColor(theme.label)
         .tracking(2)
     }
 }

@@ -4,22 +4,21 @@ struct ContentView: View {
     @StateObject private var vm = TimerViewModel()
     @State private var showSetTime = false
     @State private var alwaysOnTop = false
+    @State private var isDark = true
 
-    // Colors
-    private let bg           = Color(red: 0.06, green: 0.06, blue: 0.08)
+    private var theme: AppTheme { isDark ? .dark : .light }
+
+    // Accent colors (same in both themes)
     private let accentBlue   = Color(red: 0.3,  green: 0.7,  blue: 1.0)
     private let accentGreen  = Color(red: 0.2,  green: 0.85, blue: 0.5)
     private let accentOrange = Color(red: 1.0,  green: 0.55, blue: 0.2)
     private let accentRed    = Color(red: 1.0,  green: 0.3,  blue: 0.3)
-    private let dim          = Color(red: 0.4,  green: 0.4,  blue: 0.45)
 
-    // Quick-preset minutes available in countdown mode
     private let presets = [5, 10, 15, 25, 45]
 
-    // Digit color based on warning level (spec: none=off-white, caution=yellow, danger=red)
     private var digitColor: Color {
         switch vm.warningLevel {
-        case .none:    return Color(red: 0.95, green: 0.95, blue: 0.92)
+        case .none:    return theme.digitNormal
         case .caution: return Color(red: 1.0,  green: 0.85, blue: 0.2)
         case .danger:  return Color(red: 1.0,  green: 0.35, blue: 0.35)
         }
@@ -27,7 +26,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            bg.ignoresSafeArea()
+            theme.bg.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 topBar
@@ -38,13 +37,12 @@ struct ContentView: View {
                     progressBar.padding(.bottom, 20)
                 }
 
-                FlipClockDisplay(vm: vm, digitColor: digitColor)
+                FlipClockDisplay(vm: vm, digitColor: digitColor, theme: theme)
                     .animation(.easeInOut(duration: 0.4), value: vm.warningLevel)
 
-                UnitLabels()
+                UnitLabels(theme: theme)
                     .padding(.top, 10)
 
-                // Quick presets (countdown mode, idle/paused only)
                 if vm.mode == .countdown && vm.state != .running {
                     presetBar.padding(.top, 20)
                 }
@@ -66,7 +64,7 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 780, minHeight: 460)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(isDark ? .dark : .light)
         .onAppear { vm.updateDigits(for: vm.displaySeconds) }
     }
 
@@ -76,10 +74,31 @@ struct ContentView: View {
         HStack {
             Text("GOOD TIMER")
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundColor(dim)
+                .foregroundColor(theme.dim)
                 .tracking(4)
 
             Spacer()
+
+            // Theme toggle
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) { isDark.toggle() }
+            } label: {
+                Image(systemName: isDark ? "sun.max.fill" : "moon.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(theme.dim)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(theme.controlBg)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(theme.dim.opacity(0.25), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            .help(isDark ? "Switch to Light" : "Switch to Dark")
 
             // Always-on-top toggle
             Button {
@@ -92,16 +111,16 @@ struct ContentView: View {
                     Text(alwaysOnTop ? "ON" : "OFF")
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
                 }
-                .foregroundColor(alwaysOnTop ? .black : dim)
+                .foregroundColor(alwaysOnTop ? .black : theme.dim)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(alwaysOnTop ? accentBlue : Color.white.opacity(0.06))
+                        .fill(alwaysOnTop ? accentBlue : theme.controlBg)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(alwaysOnTop ? Color.clear : dim.opacity(0.25), lineWidth: 1)
+                        .stroke(alwaysOnTop ? Color.clear : theme.dim.opacity(0.25), lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)
@@ -117,9 +136,9 @@ struct ContentView: View {
                     if vm.mode != .countup { withAnimation { vm.toggleMode() } }
                 }
             }
-            .background(Color.white.opacity(0.06))
+            .background(theme.controlBg)
             .clipShape(RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(dim.opacity(0.2), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.dim.opacity(0.2), lineWidth: 1))
         }
         .padding(.horizontal, 28)
         .padding(.top, 20)
@@ -133,7 +152,7 @@ struct ContentView: View {
                 Image(systemName: icon).font(.system(size: 10))
                 Text(label).font(.system(size: 11, weight: .semibold, design: .monospaced))
             }
-            .foregroundColor(isActive ? .black : dim)
+            .foregroundColor(isActive ? .black : theme.dim)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(
@@ -149,7 +168,7 @@ struct ContentView: View {
 
     private var progressBarColor: Color {
         switch vm.warningLevel {
-        case .none:    return accentBlue  // will use gradient below
+        case .none:    return accentBlue
         case .caution: return Color(red: 1.0, green: 0.85, blue: 0.2)
         case .danger:  return Color(red: 1.0, green: 0.35, blue: 0.35)
         }
@@ -159,7 +178,7 @@ struct ContentView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.white.opacity(0.07))
+                    .fill(theme.progressTrack)
                 RoundedRectangle(cornerRadius: 2)
                     .fill(vm.warningLevel == .none
                           ? LinearGradient(colors: [accentBlue, accentGreen], startPoint: .leading, endPoint: .trailing)
@@ -185,18 +204,10 @@ struct ContentView: View {
                     vm.setCountdown(hours: 0, minutes: min, seconds: 0)
                 } label: {
                     Text("\(min) MIN")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundColor(isActive ? .black : dim)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 7)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(isActive ? accentBlue : Color.white.opacity(0.06))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(isActive ? Color.clear : dim.opacity(0.25), lineWidth: 1)
-                        )
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundColor(isActive ? accentBlue : theme.dim.opacity(0.45))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                 }
                 .buttonStyle(.plain)
             }
@@ -213,7 +224,7 @@ struct ContentView: View {
                 }
             }
 
-            CtrlBtn("RESET", icon: "arrow.counterclockwise", color: dim, filled: false) {
+            CtrlBtn("RESET", icon: "arrow.counterclockwise", color: theme.dim, filled: false) {
                 withAnimation { vm.reset() }
             }
 
