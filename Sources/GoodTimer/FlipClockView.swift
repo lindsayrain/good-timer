@@ -21,9 +21,9 @@ struct AppTheme {
     static let dark = AppTheme(
         isDark: true,
         bg:            Color(red: 0.06,  green: 0.06,  blue: 0.08),
-        cardTop:       Color(red: 0.13,  green: 0.13,  blue: 0.15),
+        cardTop:       Color(red: 0.09,  green: 0.09,  blue: 0.11),
         cardMid:       Color(red: 0.09,  green: 0.09,  blue: 0.11),
-        cardBottom:    Color(red: 0.06,  green: 0.06,  blue: 0.08),
+        cardBottom:    Color(red: 0.09,  green: 0.09,  blue: 0.11),
         divider:       Color(red: 0.03,  green: 0.03,  blue: 0.04),
         highlight:     Color.white.opacity(0.15),
         cardShadow:    Color.black.opacity(0.55),
@@ -38,7 +38,7 @@ struct AppTheme {
     static let light = AppTheme(
         isDark: false,
         bg:            Color(red: 0.90,  green: 0.89,  blue: 0.87),
-        cardTop:       Color(red: 0.98,  green: 0.97,  blue: 0.96),
+        cardTop:       Color(red: 0.93,  green: 0.92,  blue: 0.90),
         cardMid:       Color(red: 0.88,  green: 0.87,  blue: 0.85),
         cardBottom:    Color(red: 0.78,  green: 0.77,  blue: 0.75),
         divider:       Color(red: 0.65,  green: 0.64,  blue: 0.62),
@@ -56,14 +56,18 @@ struct AppTheme {
 // MARK: - Layout constants (shared across all components)
 
 enum ClockLayout {
-    static let cardW: CGFloat = 100
-    static let halfH: CGFloat = 62
+    static let cardW: CGFloat = 62
+    static let halfH: CGFloat = 46
     static let cardH: CGFloat = halfH * 2 + 2
-    static let digitGap: CGFloat = 6
+    static let digitGap: CGFloat = 4
     static let pairW: CGFloat = cardW * 2 + digitGap
-    static let sepW: CGFloat = 40
-    static let fontSize: CGFloat = 76
+    static let sepW: CGFloat = 28
+    static let fontSize: CGFloat = 50
     static let corner: CGFloat = 3
+
+    // Base dimensions for dynamic scaling
+    static let baseW: CGFloat = pairW * 3 + sepW * 2
+    static let baseH: CGFloat = halfH * 2 + 4 + 10 + 15 + 20 + 20  // cards + gap + label padding + labels + preset padding + preset
 }
 
 // MARK: - Single half-card (top or bottom)
@@ -101,10 +105,7 @@ private struct HalfCard: View {
                 .clipped()
         }
         .frame(width: W, height: H)
-        .shadow(
-            color: isTop ? Color.clear : theme.cardShadow,
-            radius: 6, x: 0, y: 4
-        )
+        .clipped()
     }
 }
 
@@ -193,6 +194,7 @@ struct ClockSeparator: View {
             Circle().fill(theme.separator).frame(width: dot, height: dot)
             Circle().fill(theme.separator).frame(width: dot, height: dot)
         }
+        .offset(y: 30)
         .frame(width: ClockLayout.sepW)
         .opacity(on ? 1 : 0.25)
         .onAppear {

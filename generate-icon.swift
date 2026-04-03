@@ -72,18 +72,10 @@ func drawIcon(pixelSize: Int) -> CGImage? {
     ctx.saveGState()
     ctx.addPath(bottomClip)
     ctx.clip()
-    // Gradient: darker at bottom, lighter at top (in bottom-left coords)
-    let botColors = [
-        CGColor(red: 0.08, green: 0.08, blue: 0.10, alpha: 1),
-        CGColor(red: 0.10, green: 0.10, blue: 0.12, alpha: 1),
-    ] as CFArray
-    let botGrad = CGGradient(colorsSpace: colorSpace, colors: botColors, locations: [0, 1])!
-    ctx.drawLinearGradient(
-        botGrad,
-        start: CGPoint(x: cardX, y: bottomY),
-        end:   CGPoint(x: cardX, y: bottomY + halfH),
-        options: []
-    )
+    // Flat fill matching current app card color
+    let cardColor = CGColor(red: 0.09, green: 0.09, blue: 0.11, alpha: 1)
+    ctx.setFillColor(cardColor)
+    ctx.fill(CGRect(x: cardX, y: bottomY, width: cardW, height: halfH))
     ctx.restoreGState()
 
     // --- Draw top half (rounded top corners) ---
@@ -101,22 +93,13 @@ func drawIcon(pixelSize: Int) -> CGImage? {
     ctx.saveGState()
     ctx.addPath(topClip)
     ctx.clip()
-    // Gradient: lighter at top, darker at bottom
-    let topColors = [
-        CGColor(red: 0.14, green: 0.14, blue: 0.16, alpha: 1),
-        CGColor(red: 0.10, green: 0.10, blue: 0.12, alpha: 1),
-    ] as CFArray
-    let topGrad = CGGradient(colorsSpace: colorSpace, colors: topColors, locations: [0, 1])!
-    ctx.drawLinearGradient(
-        topGrad,
-        start: CGPoint(x: cardX, y: topY + halfH),
-        end:   CGPoint(x: cardX, y: topY),
-        options: []
-    )
+    // Flat fill matching current app card color
+    ctx.setFillColor(cardColor)
+    ctx.fill(CGRect(x: cardX, y: topY, width: cardW, height: halfH))
     ctx.restoreGState()
 
     // --- Draw "9" digit spanning both halves ---
-    let fontSize = halfH * 0.85
+    let fontSize = halfH * 2.0
     let font = CTFontCreateWithName("ChakraPetch-Bold" as CFString, fontSize, nil)
 
     let attrs: [NSAttributedString.Key: Any] = [
@@ -130,7 +113,7 @@ func drawIcon(pixelSize: Int) -> CGImage? {
     // Center the digit horizontally and vertically across both halves
     let totalH = halfH * 2 + gapPx
     let digitX = cardX + (cardW - bounds.width) / 2 - bounds.minX
-    let digitY = bottomY + (totalH - bounds.height) / 2 - bounds.minY
+    let digitY = bottomY + (totalH - bounds.height) / 2 - bounds.minY + size * 0.01
 
     // Draw top half of digit (clip to top card)
     ctx.saveGState()

@@ -16,13 +16,14 @@
 - **計時結束提醒**：倒數歸零時發出「叮叮叮」三聲提示音
 - **深色 / 淺色主題**：右上角可一鍵切換，適應不同使用情境
 - **進度條顯示**：視覺化呈現計時進度
-- **小計時模式**：可收起為精簡視圖，不佔用桌面空間
+- **動態縮放**：視窗可自由拖曳調整大小，計時器自動等比例縮放
+- **小計時模式**：視窗寬度 400pt 以下自動切換為 icon-only 精簡模式
 
 ---
 
 ## 下載安裝
 
-**[⬇ 下載 GoodTimer-1.1.0.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.1.0/GoodTimer-1.1.0.dmg)**
+**[⬇ 下載 GoodTimer-1.1.1.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.1.1/GoodTimer-1.1.1.dmg)**
 
 1. 下載 DMG 並開啟
 2. 將 `GoodTimer.app` 拖曳至 Applications 資料夾
