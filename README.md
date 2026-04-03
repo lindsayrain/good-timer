@@ -17,17 +17,28 @@
 
 ---
 
-## 系統需求
+## 下載安裝
 
-- macOS 13 Ventura 以上
-- Swift 5.9+
+**[⬇ 下載 GoodTimer-1.0.0.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.0.0/GoodTimer-1.0.0.dmg)**
+
+1. 下載 DMG 並開啟
+2. 將 `GoodTimer.app` 拖曳至 Applications 資料夾
+3. 首次開啟若出現安全性提示，前往「系統設定 > 隱私權與安全性」點選「仍要開啟」
+
+所有版本：[Releases](https://github.com/lindsayrain/good-timer/releases)
 
 ---
 
-## 安裝與執行
+## 系統需求
+
+- macOS 13 Ventura 以上
+
+---
+
+## 從原始碼執行
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/good-timer.git
+git clone https://github.com/lindsayrain/good-timer.git
 cd good-timer
 swift run
 ```
