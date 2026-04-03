@@ -21,9 +21,9 @@ struct AppTheme {
     static let dark = AppTheme(
         isDark: true,
         bg:            Color(red: 0.06,  green: 0.06,  blue: 0.08),
-        cardTop:       Color(red: 0.17,  green: 0.17,  blue: 0.20),
-        cardMid:       Color(red: 0.135, green: 0.135, blue: 0.16),
-        cardBottom:    Color(red: 0.10,  green: 0.10,  blue: 0.12),
+        cardTop:       Color(red: 0.13,  green: 0.13,  blue: 0.15),
+        cardMid:       Color(red: 0.09,  green: 0.09,  blue: 0.11),
+        cardBottom:    Color(red: 0.06,  green: 0.06,  blue: 0.08),
         divider:       Color(red: 0.03,  green: 0.03,  blue: 0.04),
         highlight:     Color.white.opacity(0.15),
         cardShadow:    Color.black.opacity(0.55),
@@ -63,7 +63,7 @@ enum ClockLayout {
     static let pairW: CGFloat = cardW * 2 + digitGap
     static let sepW: CGFloat = 40
     static let fontSize: CGFloat = 76
-    static let corner: CGFloat = 10
+    static let corner: CGFloat = 3
 }
 
 // MARK: - Single half-card (top or bottom)
@@ -94,7 +94,7 @@ private struct HalfCard: View {
             ))
 
             Text(String(digit))
-                .font(.system(size: F, weight: .black, design: .default))
+                .font(.custom("ChakraPetch-Bold", size: F))
                 .foregroundColor(digitColor)
                 .offset(y: isTop ? H / 2 : -H / 2)
                 .frame(width: W, height: H * 2)
@@ -143,7 +143,7 @@ struct FlipCard: View {
                         axis: (1, 0, 0),
                         anchor: .top,
                         anchorZ: 0,
-                        perspective: 0.5
+                        perspective: 0
                     )
                     .offset(y: H + gap)
                     .zIndex(2)
@@ -155,7 +155,7 @@ struct FlipCard: View {
                         axis: (1, 0, 0),
                         anchor: .bottom,
                         anchorZ: 0,
-                        perspective: 0.5
+                        perspective: 0
                     )
                     .zIndex(3)
             }

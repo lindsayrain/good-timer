@@ -14,7 +14,9 @@ struct ContentView: View {
     private let accentOrange = Color(red: 1.0,  green: 0.55, blue: 0.2)
     private let accentRed    = Color(red: 1.0,  green: 0.3,  blue: 0.3)
 
-    private let presets = [5, 10, 15, 25, 45]
+    private let presets: [(label: String, seconds: Int)] = [
+        ("5 SEC", 5), ("5 MIN", 300), ("10 MIN", 600), ("15 MIN", 900), ("25 MIN", 1500), ("45 MIN", 2700)
+    ]
 
     private var digitColor: Color {
         switch vm.warningLevel {
@@ -197,13 +199,16 @@ struct ContentView: View {
 
     private var presetBar: some View {
         HStack(spacing: 10) {
-            ForEach(presets, id: \.self) { min in
-                let isActive = vm.countdownTarget == min * 60
+            ForEach(Array(presets.enumerated()), id: \.offset) { _, preset in
+                let isActive = vm.countdownTarget == preset.seconds
 
                 Button {
-                    vm.setCountdown(hours: 0, minutes: min, seconds: 0)
+                    let h = preset.seconds / 3600
+                    let m = (preset.seconds % 3600) / 60
+                    let s = preset.seconds % 60
+                    vm.setCountdown(hours: h, minutes: m, seconds: s)
                 } label: {
-                    Text("\(min) MIN")
+                    Text(preset.label)
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundColor(isActive ? accentBlue : theme.dim.opacity(0.45))
                         .padding(.horizontal, 8)

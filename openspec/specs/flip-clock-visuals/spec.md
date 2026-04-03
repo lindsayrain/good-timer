@@ -6,7 +6,7 @@ The flip animation SHALL use two independent flaps anchored at the center line:
 - Upper flap (old digit top half): SHALL rotate from 0° to -90° around its bottom edge (anchor: bottom)
 - Lower flap (new digit bottom half): SHALL rotate from 90° to 0° around its top edge (anchor: top)
 Both flaps SHALL animate simultaneously with an easeInOut curve of duration 0.45s.
-The perspective value SHALL be 0.5.
+The perspective value SHALL be 0.
 
 #### Scenario: Digit changes during countdown
 
@@ -86,22 +86,29 @@ code:
 ---
 ### Requirement: Font matches train station display style
 
-Digit text SHALL use `.system(size: 76, weight: .black, design: .default)` (SF Pro Display Black).
+Digit text SHALL use `Font.custom("ChakraPetch-Bold", size: 76)` (Chakra Petch Bold, bundled in app resources).
+The font file `ChakraPetch-Bold.ttf` SHALL be placed in `Sources/GoodTimer/Resources/` and declared as `.process("Resources")` in `Package.swift`.
+The card corner radius (`ClockLayout.corner`) SHALL be 3pt.
 
 #### Scenario: Digit rendered on card
 
 - **WHEN** any digit is displayed on a flip card
-- **THEN** the digit is rendered in black-weight, default-design system font at size 76
+- **THEN** the digit SHALL be rendered in Chakra Petch Bold at size 76
+- **THEN** the font SHALL use the bundled `ChakraPetch-Bold.ttf` resource, NOT the system font
+- **WHEN** the font resource fails to load
+- **THEN** SwiftUI SHALL fall back to the system font (acceptable degradation)
 
 
 <!-- @trace
-source: enhance-flip-clock-ui
-updated: 2026-04-02
+source: station-visual-overhaul
+updated: 2026-04-03
 code:
-  - .spectra/changes/enhance-flip-clock-ui.started
-  - .spectra/spectra.db
+  - generate-icon.swift
+  - Sources/GoodTimer/TimerViewModel.swift
+  - Package.swift
   - Sources/GoodTimer/ContentView.swift
   - Sources/GoodTimer/FlipClockView.swift
+  - Sources/GoodTimer/Resources/ChakraPetch-Bold.ttf
 -->
 
 ---
@@ -161,4 +168,41 @@ code:
   - .spectra/spectra.db
   - Sources/GoodTimer/ContentView.swift
   - Sources/GoodTimer/FlipClockView.swift
+-->
+
+---
+### Requirement: Dark theme uses pure-black card colors
+
+The dark `AppTheme` card colors SHALL be:
+- `cardTop`: `Color(red: 0.13, green: 0.13, blue: 0.15)` (near-black, slightly lighter)
+- `cardMid`: `Color(red: 0.09, green: 0.09, blue: 0.11)` (near-black)
+- `cardBottom`: `Color(red: 0.06, green: 0.06, blue: 0.08)` (near-black, darkest)
+
+#### Scenario: Dark theme card at rest
+
+- **WHEN** the clock is displayed in dark mode
+- **THEN** each card half SHALL render with near-black gradient (cardTop → cardMid for top half, cardMid → cardBottom for bottom half)
+- **THEN** the digit SHALL appear in high contrast against the near-black background
+
+---
+### Requirement: Flip animation uses orthographic projection
+
+The `FlipCard` view's `rotation3DEffect` SHALL use `perspective: 0` (orthographic projection) for both the upper and lower flap animations.
+
+#### Scenario: Digit flips during countdown
+
+- **WHEN** a digit changes during countdown
+- **THEN** the flip animation SHALL NOT cause any vertical position shift of the digit
+- **THEN** the rotation SHALL appear as a flat vertical compression without 3D perspective distortion
+
+<!-- @trace
+source: station-visual-overhaul
+updated: 2026-04-03
+code:
+  - generate-icon.swift
+  - Sources/GoodTimer/TimerViewModel.swift
+  - Package.swift
+  - Sources/GoodTimer/ContentView.swift
+  - Sources/GoodTimer/FlipClockView.swift
+  - Sources/GoodTimer/Resources/ChakraPetch-Bold.ttf
 -->

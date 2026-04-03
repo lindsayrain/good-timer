@@ -142,11 +142,11 @@ class TimerViewModel: ObservableObject {
     }
 
     private func triggerFinishAlert() {
-        // Three boxing bell dings
-        let delays: [Double] = [0, 0.65, 1.3]
+        let delays: [Double] = [0, 0.2, 0.4]
         for delay in delays {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                NSSound(named: "Glass")?.play()
+                guard let sound = NSSound(named: "Glass")?.copy() as? NSSound else { return }
+                sound.play()
             }
         }
     }

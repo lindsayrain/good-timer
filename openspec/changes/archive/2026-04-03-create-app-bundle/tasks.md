@@ -22,5 +22,11 @@
 
 - [x] 4.1 執行 `./package.sh`，確認專案根目錄出現 `GoodTimer-1.0.0.dmg`
 - [x] 4.2 開啟 DMG，確認 `GoodTimer.app` 與 `Applications` 捷徑均顯示正確
-- [ ] 4.3 拖曳安裝後確認 App 可正常啟動、Spotlight 可搜尋、Dock 顯示翻牌 icon
+- [x] 4.3 拖曳安裝後確認 App 可正常啟動、Spotlight 可搜尋、Dock 顯示翻牌 icon
 - [x] 4.4 修改 `Info.plist` 版本號為 `1.1.0`，重新執行 `./package.sh`，確認產出 `GoodTimer-1.1.0.dmg`
+
+## 5. 發布
+
+- [x] 5.1 安裝 GitHub CLI（`gh`）並完成 `gh auth login`
+- [x] 5.2 建立 GitHub Release v1.0.0，附上 `GoodTimer-1.0.0.dmg`，包含安裝說明
+- [x] 5.3 更新 `README.md`，加入 v1.0.0 直接下載連結與 Releases 頁面連結

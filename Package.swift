@@ -9,7 +9,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "GoodTimer",
-            path: "Sources/GoodTimer"
+            path: "Sources/GoodTimer",
+            resources: [.process("Resources")]
         )
     ]
 )
