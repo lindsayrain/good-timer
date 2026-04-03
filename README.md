@@ -22,7 +22,7 @@
 
 ## 下載安裝
 
-**[⬇ 下載 GoodTimer-1.0.0.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.0.0/GoodTimer-1.0.0.dmg)**
+**[⬇ 下載 GoodTimer-1.1.0.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.1.0/GoodTimer-1.1.0.dmg)**
 
 1. 下載 DMG 並開啟
 2. 將 `GoodTimer.app` 拖曳至 Applications 資料夾
