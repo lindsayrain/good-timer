@@ -6,3 +6,11 @@
 xcuserdata/
 DerivedData/
 .DS_Store
+.spectra/
+openspec/.vector-search.db*
+
+# Build artifacts
+*.dmg
+AppIcon.iconset/
+AppIcon.icns
+.staging/
