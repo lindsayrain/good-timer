@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var alwaysOnTop = false
     @State private var isDark = true
     @State private var windowWidth: CGFloat = 780
+    @State private var opacityLevel: Int = 0  // 0=100%, 1=75%, 2=50%, 3=25%
 
     private var theme: AppTheme { isDark ? .dark : .light }
 
@@ -24,8 +25,12 @@ struct ContentView: View {
     private var digitColor: Color {
         switch vm.warningLevel {
         case .none:    return theme.digitNormal
-        case .caution: return Color(red: 1.0,  green: 0.85, blue: 0.2)
-        case .danger:  return Color(red: 1.0,  green: 0.35, blue: 0.35)
+        case .caution: return isDark
+            ? Color(red: 1.0,  green: 0.85, blue: 0.2)
+            : Color(red: 0.85, green: 0.55, blue: 0.0)
+        case .danger:  return isDark
+            ? Color(red: 1.0,  green: 0.35, blue: 0.35)
+            : Color(red: 0.85, green: 0.15, blue: 0.15)
         }
     }
 
@@ -95,6 +100,41 @@ struct ContentView: View {
 
             Spacer()
 
+            // Time adjust ±15s
+            Button { vm.adjustTime(by: -15) } label: {
+                Text("-15s")
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .foregroundColor(theme.dim)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(theme.controlBg)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(theme.dim.opacity(0.25), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+
+            Button { vm.adjustTime(by: 15) } label: {
+                Text("+15s")
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .foregroundColor(theme.dim)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(theme.controlBg)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(theme.dim.opacity(0.25), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+
             // Theme toggle
             Button {
                 withAnimation(.easeInOut(duration: 0.25)) { isDark.toggle() }
@@ -115,6 +155,29 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
             .help(isDark ? "Switch to Light" : "Switch to Dark")
+
+            // Opacity toggle
+            Button {
+                opacityLevel = (opacityLevel + 1) % 4
+                let alpha: CGFloat = [1.0, 0.75, 0.5, 0.25][opacityLevel]
+                NSApp.windows.first(where: { $0.canBecomeMain })?.alphaValue = alpha
+            } label: {
+                Text(["100%", "75%", "50%", "25%"][opacityLevel])
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .foregroundColor(opacityLevel == 0 ? theme.dim : accentBlue)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(theme.controlBg)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(opacityLevel == 0 ? theme.dim.opacity(0.25) : accentBlue.opacity(0.4), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            .help("Window Opacity")
 
             // Always-on-top toggle
             Button {

@@ -113,6 +113,19 @@ class TimerViewModel: ObservableObject {
         }
     }
 
+    func adjustTime(by seconds: Int) {
+        if mode == .countdown {
+            countdownTarget = max(0, countdownTarget + seconds)
+            if state == .running {
+                elapsedSeconds = max(0, min(elapsedSeconds, countdownTarget))
+            }
+        } else {
+            elapsedSeconds = max(0, elapsedSeconds + seconds)
+        }
+        updateDigits(for: displaySeconds)
+        warningLevel = computeWarningLevel()
+    }
+
     // MARK: - Private helpers
     private func scheduleTimer() {
         startDate = Date()
