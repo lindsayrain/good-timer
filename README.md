@@ -15,6 +15,8 @@
 - **快速預設時間**：提供 5 秒、5、10、15、25、45 分鐘等常用快選，一鍵設定
 - **Menu Bar 控制台**：menu bar 顯示計時狀態，點擊展開迷你控制面板，免切視窗即可操作
 - **計時結束提醒**：倒數歸零時發出 Glass → Glass → Ping 三聲層次提示音
+- **±15 秒快轉**：topBar 一鍵微調計時時間，講師授課快轉利器
+- **視窗透明度**：四段透明度切換（100%/75%/50%/25%），投影場景好幫手
 - **深色 / 淺色主題**：右上角可一鍵切換，適應不同使用情境
 - **進度條顯示**：視覺化呈現計時進度
 - **動態縮放**：視窗可自由拖曳調整大小，計時器自動等比例縮放
@@ -24,7 +26,7 @@
 
 ## 下載安裝
 
-**[⬇ 下載 GoodTimer-1.1.2.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.1.2/GoodTimer-1.1.2.dmg)**
+**[⬇ 下載 GoodTimer-1.1.3.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.1.3/GoodTimer-1.1.3.dmg)**
 
 1. 下載 DMG 並開啟
 2. 將 `GoodTimer.app` 拖曳至 Applications 資料夾
