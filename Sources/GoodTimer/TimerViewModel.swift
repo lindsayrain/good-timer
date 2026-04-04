@@ -142,10 +142,12 @@ class TimerViewModel: ObservableObject {
     }
 
     private func triggerFinishAlert() {
-        let delays: [Double] = [0, 0.2, 0.4]
-        for delay in delays {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                guard let sound = NSSound(named: "Glass")?.copy() as? NSSound else { return }
+        let sequence: [(name: String, delay: Double)] = [
+            ("Glass", 0.0), ("Glass", 0.3), ("Ping", 0.6)
+        ]
+        for item in sequence {
+            DispatchQueue.main.asyncAfter(deadline: .now() + item.delay) {
+                guard let sound = NSSound(named: item.name)?.copy() as? NSSound else { return }
                 sound.play()
             }
         }

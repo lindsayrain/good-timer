@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var vm = TimerViewModel()
+    @EnvironmentObject var vm: TimerViewModel
     @State private var showSetTime = false
     @State private var alwaysOnTop = false
     @State private var isDark = true

@@ -13,7 +13,8 @@
 - **翻牌時鐘動畫**：採用雙葉片機制，搭配 Chakra Petch Bold 切角字形，忠實重現台灣鐵路局機械翻牌顯示器的視覺效果
 - **倒數計時 / 正數計時**：支援兩種計時模式，切換自如
 - **快速預設時間**：提供 5 秒、5、10、15、25、45 分鐘等常用快選，一鍵設定
-- **計時結束提醒**：倒數歸零時發出「叮叮叮」三聲提示音
+- **Menu Bar 控制台**：menu bar 顯示計時狀態，點擊展開迷你控制面板，免切視窗即可操作
+- **計時結束提醒**：倒數歸零時發出 Glass → Glass → Ping 三聲層次提示音
 - **深色 / 淺色主題**：右上角可一鍵切換，適應不同使用情境
 - **進度條顯示**：視覺化呈現計時進度
 - **動態縮放**：視窗可自由拖曳調整大小，計時器自動等比例縮放
@@ -23,7 +24,7 @@
 
 ## 下載安裝
 
-**[⬇ 下載 GoodTimer-1.1.1.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.1.1/GoodTimer-1.1.1.dmg)**
+**[⬇ 下載 GoodTimer-1.1.2.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.1.2/GoodTimer-1.1.2.dmg)**
 
 1. 下載 DMG 並開啟
 2. 將 `GoodTimer.app` 拖曳至 Applications 資料夾

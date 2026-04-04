@@ -3,10 +3,21 @@ import SwiftUI
 @main
 struct GoodTimerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var vm = TimerViewModel()
+
+    private var menuBarTitle: String {
+        guard vm.state == .running else { return "" }
+        let total = vm.displaySeconds
+        let h = total / 3600
+        let m = (total % 3600) / 60
+        let s = total % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%02d:%02d", m, s)
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(vm)
                 .preferredColorScheme(.dark)
         }
         .windowStyle(.hiddenTitleBar)
@@ -14,6 +25,18 @@ struct GoodTimerApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
         }
+
+        MenuBarExtra {
+            MenuBarView()
+                .environmentObject(vm)
+        } label: {
+            if vm.state == .running {
+                Text(menuBarTitle)
+            } else {
+                Image(systemName: "timer")
+            }
+        }
+        .menuBarExtraStyle(.window)
     }
 }
 
@@ -24,6 +47,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
+        return false
     }
 }

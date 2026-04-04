@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Timer completion plays three audible dings
 
@@ -14,13 +14,3 @@ The sound names and delays SHALL be `[("Glass", 0.0), ("Glass", 0.3), ("Ping", 0
 - **THEN** two "Glass" sounds and one "Ping" sound SHALL play in sequence
 - **THEN** each sound SHALL be audible as a distinct tone
 - **THEN** the total sequence duration SHALL be approximately 0.6 seconds
-
-<!-- @trace
-source: menu-bar-and-sound
-updated: 2026-04-04
-code:
-  - Sources/GoodTimer/MenuBarView.swift
-  - Sources/GoodTimer/TimerViewModel.swift
-  - Sources/GoodTimer/ContentView.swift
-  - Sources/GoodTimer/GoodTimerApp.swift
--->
