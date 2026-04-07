@@ -182,7 +182,15 @@ struct ContentView: View {
             // Always-on-top toggle
             Button {
                 alwaysOnTop.toggle()
-                NSApp.windows.first?.level = alwaysOnTop ? .floating : .normal
+                if let window = NSApp.windows.first(where: { $0.canBecomeMain }) {
+                    if alwaysOnTop {
+                        window.level = .screenSaver
+                        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+                    } else {
+                        window.level = .normal
+                        window.collectionBehavior = []
+                    }
+                }
             } label: {
                 HStack(spacing: compact ? 0 : 6) {
                     Image(systemName: "pin.fill")
