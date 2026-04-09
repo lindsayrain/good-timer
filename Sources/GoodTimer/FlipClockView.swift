@@ -77,12 +77,13 @@ private struct HalfCard: View {
     let isTop: Bool
     let digitColor: Color
     let theme: AppTheme
+    var scale: CGFloat = 1
 
     var body: some View {
-        let W = ClockLayout.cardW
-        let H = ClockLayout.halfH
-        let F = ClockLayout.fontSize
-        let R = ClockLayout.corner
+        let W = ClockLayout.cardW * scale
+        let H = ClockLayout.halfH * scale
+        let F = ClockLayout.fontSize * scale
+        let R = ClockLayout.corner * scale
 
         ZStack {
             UnevenRoundedRectangle(
@@ -116,6 +117,7 @@ struct FlipCard: View {
     let prevDigit: Int
     let digitColor: Color
     let theme: AppTheme
+    var scale: CGFloat = 1
 
     @State private var flipping = false
     @State private var upperFlapDeg: Double = 0   // 0 → -90 (pivot: bottom = centerline)
@@ -124,21 +126,21 @@ struct FlipCard: View {
     @State private var flapNew: Int = 0
 
     var body: some View {
-        let W = ClockLayout.cardW
-        let H = ClockLayout.halfH
-        let gap = CGFloat(4)
+        let W = ClockLayout.cardW * scale
+        let H = ClockLayout.halfH * scale
+        let gap = CGFloat(4) * scale
 
         ZStack(alignment: .top) {
             // Static top: always shows new digit (revealed as upper flap folds away)
-            HalfCard(digit: digit, isTop: true, digitColor: digitColor, theme: theme)
+            HalfCard(digit: digit, isTop: true, digitColor: digitColor, theme: theme, scale: scale)
 
             // Static bottom: shows old digit during flip, new digit at rest
-            HalfCard(digit: flipping ? flapOld : digit, isTop: false, digitColor: digitColor, theme: theme)
+            HalfCard(digit: flipping ? flapOld : digit, isTop: false, digitColor: digitColor, theme: theme, scale: scale)
                 .offset(y: H + gap)
 
             if flipping {
                 // Lower flap: NEW digit bottom half — starts edge-on (90°), unfolds to flat (0°)
-                HalfCard(digit: flapNew, isTop: false, digitColor: digitColor, theme: theme)
+                HalfCard(digit: flapNew, isTop: false, digitColor: digitColor, theme: theme, scale: scale)
                     .rotation3DEffect(
                         .degrees(lowerFlapDeg),
                         axis: (1, 0, 0),
@@ -150,7 +152,7 @@ struct FlipCard: View {
                     .zIndex(2)
 
                 // Upper flap: OLD digit top half — starts flat (0°), folds to edge-on (-90°)
-                HalfCard(digit: flapOld, isTop: true, digitColor: digitColor, theme: theme)
+                HalfCard(digit: flapOld, isTop: true, digitColor: digitColor, theme: theme, scale: scale)
                     .rotation3DEffect(
                         .degrees(upperFlapDeg),
                         axis: (1, 0, 0),
@@ -185,17 +187,19 @@ struct FlipCard: View {
 
 struct ClockSeparator: View {
     let theme: AppTheme
+    var width: CGFloat = ClockLayout.sepW
+    var scale: CGFloat = 1
     @State private var on = true
 
     var body: some View {
-        let dot = ClockLayout.halfH * 0.14
+        let dot = ClockLayout.halfH * 0.14 * scale
 
-        VStack(spacing: ClockLayout.halfH * 0.22) {
+        VStack(spacing: ClockLayout.halfH * 0.22 * scale) {
             Circle().fill(theme.separator).frame(width: dot, height: dot)
             Circle().fill(theme.separator).frame(width: dot, height: dot)
         }
-        .offset(y: 30)
-        .frame(width: ClockLayout.sepW)
+        .offset(y: 30 * scale)
+        .frame(width: width)
         .opacity(on ? 1 : 0.25)
         .onAppear {
             withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
@@ -211,24 +215,26 @@ struct FlipClockDisplay: View {
     @ObservedObject var vm: TimerViewModel
     let digitColor: Color
     let theme: AppTheme
+    var separatorWidth: CGFloat = ClockLayout.sepW
+    var scale: CGFloat = 1
 
     var body: some View {
         HStack(spacing: 0) {
             digitPair(a: 0, b: 1)
-            ClockSeparator(theme: theme)
+            ClockSeparator(theme: theme, width: separatorWidth * scale, scale: scale)
             digitPair(a: 2, b: 3)
-            ClockSeparator(theme: theme)
+            ClockSeparator(theme: theme, width: separatorWidth * scale, scale: scale)
             digitPair(a: 4, b: 5)
         }
     }
 
     @ViewBuilder
     private func digitPair(a: Int, b: Int) -> some View {
-        HStack(spacing: ClockLayout.digitGap) {
-            FlipCard(digit: vm.digits[a], prevDigit: vm.previousDigits[a], digitColor: digitColor, theme: theme)
-            FlipCard(digit: vm.digits[b], prevDigit: vm.previousDigits[b], digitColor: digitColor, theme: theme)
+        HStack(spacing: ClockLayout.digitGap * scale) {
+            FlipCard(digit: vm.digits[a], prevDigit: vm.previousDigits[a], digitColor: digitColor, theme: theme, scale: scale)
+            FlipCard(digit: vm.digits[b], prevDigit: vm.previousDigits[b], digitColor: digitColor, theme: theme, scale: scale)
         }
-        .frame(width: ClockLayout.pairW)
+        .frame(width: ClockLayout.pairW * scale)
     }
 }
 

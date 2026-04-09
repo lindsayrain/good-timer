@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var alwaysOnTop = false
     @State private var isDark = true
     @State private var windowWidth: CGFloat = 780
+    @State private var windowHeight: CGFloat = 480
     @State private var opacityLevel: Int = 0  // 0=100%, 1=75%, 2=50%, 3=25%
 
     private var theme: AppTheme { isDark ? .dark : .light }
@@ -21,6 +22,11 @@ struct ContentView: View {
     ]
 
     private var compact: Bool { windowWidth < 400 }
+    private var mini: Bool { windowWidth < 400 }
+    // When the window is narrower than this, collapse text-heavy top bar
+    // buttons to icon-only so nothing wraps.
+    private var narrow: Bool { windowWidth < 560 }
+
 
     private var digitColor: Color {
         switch vm.warningLevel {
@@ -34,37 +40,113 @@ struct ContentView: View {
         }
     }
 
+    // MARK: - Flip clock sizing rules
+    //
+    // The flip cards are the primary content. Layout rules:
+    // 1. Reserve fixed height for top bar (or pin reserve), progress bar,
+    //    preset bar (when shown), and control bar.
+    // 2. The cards claim the remaining height, but also target at least 60%
+    //    of the window height as a height-budget.
+    // 3. Final scale = min(widthLimited, heightLimited).
+    //
+    // This makes the cards dominate the window vertically whenever the
+    // aspect ratio allows, while never overflowing the window width.
+    private struct CardMetrics {
+        let sepW: CGFloat
+        let baseW: CGFloat
+        let baseH: CGFloat
+        let scale: CGFloat
+        var width: CGFloat { baseW * scale }
+        var height: CGFloat { baseH * scale }
+    }
+
+    private func cardMetrics() -> CardMetrics {
+        let sepW: CGFloat = mini ? 4 : ClockLayout.sepW
+        let baseW = ClockLayout.pairW * 3 + sepW * 2
+        let baseH: CGFloat = ClockLayout.halfH * 2 + 4  // cards only, no labels/preset
+
+        // Minimum reserves for non-card chrome.
+        let topReserve: CGFloat     = mini ? 22 : 44
+        let progressReserve: CGFloat = (vm.mode == .countdown) ? (mini ? 2.5 : 4) : 0
+        let presetReserve: CGFloat  = (!mini && vm.mode == .countdown && vm.state != .running) ? 34 : 0
+        let controlReserve: CGFloat = mini ? 30 : 66
+        let reservedH = topReserve + progressReserve + presetReserve + controlReserve
+
+        // Height budget after reserving chrome, but never less than 60% of window.
+        let remaining = max(0, windowHeight - reservedH)
+        let cardHBudget = max(remaining, windowHeight * 0.6)
+
+        let scaleByW = windowWidth / baseW
+        let scaleByH = cardHBudget / baseH
+        let scale = max(0.05, min(scaleByW, scaleByH))
+
+        return CardMetrics(sepW: sepW, baseW: baseW, baseH: baseH, scale: scale)
+    }
+
     var body: some View {
-        ZStack {
+        let metrics = cardMetrics()
+
+        return ZStack {
             theme.bg.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                topBar
+                // Top bar (or pin reserve in mini mode)
+                if !mini {
+                    topBar
+                } else {
+                    Color.clear.frame(height: 22)
+                }
 
+                // Progress bar — tight against the cards
                 if vm.mode == .countdown {
-                    progressBar.padding(.bottom, 8)
+                    progressBar.padding(.bottom, 1)
                 }
 
-                GeometryReader { geo in
-                    let scale = min(
-                        geo.size.width / ClockLayout.baseW,
-                        geo.size.height / ClockLayout.baseH
-                    )
-                    VStack(spacing: 0) {
-                        FlipClockDisplay(vm: vm, digitColor: digitColor, theme: theme)
-                            .animation(.easeInOut(duration: 0.4), value: vm.warningLevel)
-                        UnitLabels(theme: theme)
-                            .padding(.top, 10)
-                        presetBar.padding(.top, 20)
-                            .opacity(vm.mode == .countdown && vm.state != .running ? 1 : 0)
-                    }
-                    .scaleEffect(scale)
-                    .position(x: geo.size.width / 2, y: geo.size.height / 2)
-                }
-                .clipped()
+                // Flip cards — rendered at native pixel size (no bitmap scaling)
+                FlipClockDisplay(
+                    vm: vm,
+                    digitColor: digitColor,
+                    theme: theme,
+                    separatorWidth: metrics.sepW,
+                    scale: metrics.scale
+                )
+                .animation(.easeInOut(duration: 0.4), value: vm.warningLevel)
+                .frame(width: metrics.width, height: metrics.height)
+                .frame(maxWidth: .infinity)
 
+                // Flex space pushes the preset/control bars to the bottom
+                Spacer(minLength: 0)
+
+                // Preset bar (non-mini, countdown, idle only)
+                if !mini && vm.mode == .countdown && vm.state != .running {
+                    presetBar.padding(.bottom, 6)
+                }
+
+                // Control bar — pinned to bottom
                 controlBar
-                    .padding(.vertical, 12)
+                    .padding(.bottom, mini ? 6 : 14)
+            }
+
+            // App title — centered on the traffic light row (both modes).
+            // ignoresSafeArea so the title sits in the title bar strip
+            // instead of being pushed below it by safe area insets.
+            Text("GOOD TIMER")
+                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .foregroundColor(theme.dim)
+                .tracking(4)
+                .padding(.top, 8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .ignoresSafeArea(.all, edges: .top)
+                .allowsHitTesting(false)
+                .zIndex(3)
+
+            // Mini mode: pin floats at the top-right corner
+            if mini {
+                pinButton
+                    .padding(.top, 4)
+                    .padding(.trailing, 10)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                    .zIndex(4)
             }
 
             if showSetTime {
@@ -80,8 +162,14 @@ struct ContentView: View {
         .frame(minWidth: 200, minHeight: 100)
         .overlay(GeometryReader { geo in
             Color.clear
-                .onAppear { windowWidth = geo.size.width }
-                .onChange(of: geo.size) { newSize in windowWidth = newSize.width }
+                .onAppear {
+                    windowWidth = geo.size.width
+                    windowHeight = geo.size.height
+                }
+                .onChange(of: geo.size) { newSize in
+                    windowWidth = newSize.width
+                    windowHeight = newSize.height
+                }
         })
         .preferredColorScheme(isDark ? .dark : .light)
         .onAppear { vm.updateDigits(for: vm.displaySeconds) }
@@ -91,21 +179,22 @@ struct ContentView: View {
 
     private var topBar: some View {
         HStack {
-            if !compact {
-                Text("GOOD TIMER")
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundColor(theme.dim)
-                    .tracking(4)
-            }
-
             Spacer()
 
-            // Time adjust ±15s
-            Button { vm.adjustTime(by: -15) } label: {
-                Text("-15s")
-                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+            if !mini {
+                // Time adjust -15s
+                Button { vm.adjustTime(by: -15) } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "gobackward.15").font(.system(size: 11))
+                        if !narrow {
+                            Text("-15s")
+                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
+                    }
                     .foregroundColor(theme.dim)
-                    .padding(.horizontal, 7)
+                    .padding(.horizontal, narrow ? 6 : 7)
                     .padding(.vertical, 5)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
@@ -115,14 +204,23 @@ struct ContentView: View {
                         RoundedRectangle(cornerRadius: 20)
                             .stroke(theme.dim.opacity(0.25), lineWidth: 1)
                     )
-            }
-            .buttonStyle(.plain)
+                }
+                .buttonStyle(.plain)
+                .help("-15 seconds")
 
-            Button { vm.adjustTime(by: 15) } label: {
-                Text("+15s")
-                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                // Time adjust +15s
+                Button { vm.adjustTime(by: 15) } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "goforward.15").font(.system(size: 11))
+                        if !narrow {
+                            Text("+15s")
+                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
+                    }
                     .foregroundColor(theme.dim)
-                    .padding(.horizontal, 7)
+                    .padding(.horizontal, narrow ? 6 : 7)
                     .padding(.vertical, 5)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
@@ -132,40 +230,48 @@ struct ContentView: View {
                         RoundedRectangle(cornerRadius: 20)
                             .stroke(theme.dim.opacity(0.25), lineWidth: 1)
                     )
-            }
-            .buttonStyle(.plain)
+                }
+                .buttonStyle(.plain)
+                .help("+15 seconds")
 
-            // Theme toggle
-            Button {
-                withAnimation(.easeInOut(duration: 0.25)) { isDark.toggle() }
-            } label: {
-                Image(systemName: isDark ? "sun.max.fill" : "moon.fill")
-                    .font(.system(size: 11))
-                    .foregroundColor(theme.dim)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(theme.controlBg)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(theme.dim.opacity(0.25), lineWidth: 1)
-                    )
-            }
-            .buttonStyle(.plain)
-            .help(isDark ? "Switch to Light" : "Switch to Dark")
+                // Theme toggle
+                Button {
+                    withAnimation(.easeInOut(duration: 0.25)) { isDark.toggle() }
+                } label: {
+                    Image(systemName: isDark ? "sun.max.fill" : "moon.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(theme.dim)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(theme.controlBg)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(theme.dim.opacity(0.25), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .help(isDark ? "Switch to Light" : "Switch to Dark")
 
-            // Opacity toggle
-            Button {
-                opacityLevel = (opacityLevel + 1) % 4
-                let alpha: CGFloat = [1.0, 0.75, 0.5, 0.25][opacityLevel]
-                NSApp.windows.first(where: { $0.canBecomeMain })?.alphaValue = alpha
-            } label: {
-                Text(["100%", "75%", "50%", "25%"][opacityLevel])
-                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                // Opacity toggle
+                Button {
+                    opacityLevel = (opacityLevel + 1) % 4
+                    let alpha: CGFloat = [1.0, 0.8, 0.6, 0.4][opacityLevel]
+                    NSApp.windows.first(where: { $0.canBecomeMain })?.alphaValue = alpha
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "circle.lefthalf.filled").font(.system(size: 11))
+                        if !narrow {
+                            Text(["100%", "80%", "60%", "40%"][opacityLevel])
+                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
+                    }
                     .foregroundColor(opacityLevel == 0 ? theme.dim : accentBlue)
-                    .padding(.horizontal, 7)
+                    .padding(.horizontal, narrow ? 6 : 7)
                     .padding(.vertical, 5)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
@@ -175,63 +281,76 @@ struct ContentView: View {
                         RoundedRectangle(cornerRadius: 20)
                             .stroke(opacityLevel == 0 ? theme.dim.opacity(0.25) : accentBlue.opacity(0.4), lineWidth: 1)
                     )
+                }
+                .buttonStyle(.plain)
+                .help("Window Opacity: \(["100%", "80%", "60%", "40%"][opacityLevel])")
             }
-            .buttonStyle(.plain)
-            .help("Window Opacity")
 
-            // Always-on-top toggle
-            Button {
-                alwaysOnTop.toggle()
-                if let window = NSApp.windows.first(where: { $0.canBecomeMain }) {
-                    if alwaysOnTop {
-                        window.level = .screenSaver
-                        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-                    } else {
-                        window.level = .normal
-                        window.collectionBehavior = []
+            // Always-on-top toggle (non-mini: inline in top bar)
+            if !mini {
+                pinButton
+            }
+
+            if !mini {
+                // Mode toggle — pill with two segments
+                HStack(spacing: 0) {
+                    modeSegment(label: "COUNTDOWN", icon: "timer", isActive: vm.mode == .countdown) {
+                        if vm.mode != .countdown { withAnimation { vm.toggleMode() } }
+                    }
+                    modeSegment(label: "COUNT UP", icon: "stopwatch", isActive: vm.mode == .countup) {
+                        if vm.mode != .countup { withAnimation { vm.toggleMode() } }
                     }
                 }
-            } label: {
-                HStack(spacing: compact ? 0 : 6) {
-                    Image(systemName: "pin.fill")
-                        .font(.system(size: 10))
-                    if !compact {
-                        Text(alwaysOnTop ? "ON" : "OFF")
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    }
-                }
-                .foregroundColor(alwaysOnTop ? .black : theme.dim)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(alwaysOnTop ? accentBlue : theme.controlBg)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(alwaysOnTop ? Color.clear : theme.dim.opacity(0.25), lineWidth: 1)
-                )
+                .background(theme.controlBg)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.dim.opacity(0.2), lineWidth: 1))
             }
-            .buttonStyle(.plain)
-            .animation(.easeInOut(duration: 0.15), value: alwaysOnTop)
-            .help("Pin on Top")
-
-            // Mode toggle — pill with two segments
-            HStack(spacing: 0) {
-                modeSegment(label: "COUNTDOWN", icon: "timer", isActive: vm.mode == .countdown) {
-                    if vm.mode != .countdown { withAnimation { vm.toggleMode() } }
-                }
-                modeSegment(label: "COUNT UP", icon: "stopwatch", isActive: vm.mode == .countup) {
-                    if vm.mode != .countup { withAnimation { vm.toggleMode() } }
-                }
-            }
-            .background(theme.controlBg)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(theme.dim.opacity(0.2), lineWidth: 1))
         }
-        .padding(.horizontal, compact ? 8 : 28)
-        .padding(.top, compact ? 8 : 20)
-        .padding(.bottom, 8)
+        .padding(.horizontal, mini ? 6 : (compact ? 8 : 28))
+        .padding(.top, mini ? 6 : (compact ? 8 : 20))
+        .padding(.bottom, mini ? 4 : 8)
+    }
+
+    // MARK: - Pin button (shared by top bar and mini overlay)
+
+    private var pinButton: some View {
+        Button {
+            alwaysOnTop.toggle()
+            if let window = NSApp.windows.first(where: { $0.canBecomeMain }) {
+                if alwaysOnTop {
+                    window.level = .screenSaver
+                    window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+                } else {
+                    window.level = .normal
+                    window.collectionBehavior = []
+                }
+            }
+        } label: {
+            HStack(spacing: narrow ? 0 : 6) {
+                Image(systemName: "pin.fill")
+                    .font(.system(size: 10))
+                if !narrow {
+                    Text(alwaysOnTop ? "ON" : "OFF")
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+            }
+            .foregroundColor(alwaysOnTop ? .black : theme.dim)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(alwaysOnTop ? accentBlue : theme.controlBg)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(alwaysOnTop ? Color.clear : theme.dim.opacity(0.25), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: alwaysOnTop)
+        .help("Pin on Top")
     }
 
     @ViewBuilder
@@ -240,7 +359,10 @@ struct ContentView: View {
             HStack(spacing: compact ? 0 : 5) {
                 Image(systemName: icon).font(.system(size: 10))
                 if !compact {
-                    Text(label).font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    Text(label)
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
             .foregroundColor(isActive ? .black : theme.dim)
@@ -266,11 +388,12 @@ struct ContentView: View {
     }
 
     private var progressBar: some View {
-        GeometryReader { geo in
+        let h: CGFloat = mini ? 0.75 : 1.5
+        return GeometryReader { geo in
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 2)
+                RoundedRectangle(cornerRadius: h / 2)
                     .fill(theme.progressTrack)
-                RoundedRectangle(cornerRadius: 2)
+                RoundedRectangle(cornerRadius: h / 2)
                     .fill(vm.warningLevel == .none
                           ? LinearGradient(colors: [accentBlue, accentGreen], startPoint: .leading, endPoint: .trailing)
                           : LinearGradient(colors: [progressBarColor, progressBarColor], startPoint: .leading, endPoint: .trailing)
@@ -278,10 +401,10 @@ struct ContentView: View {
                     .frame(width: geo.size.width * (1 - vm.progressFraction))
                     .animation(.easeInOut(duration: 0.4), value: vm.warningLevel)
             }
-            .frame(height: 3)
+            .frame(height: h)
         }
-        .frame(height: 3)
-        .padding(.horizontal, 28)
+        .frame(height: h)
+        .padding(.horizontal, mini ? 0 : 28)
     }
 
     // MARK: - Quick preset bar
@@ -327,18 +450,20 @@ struct ContentView: View {
 
     private var controlBar: some View {
         HStack(spacing: compact ? 8 : 16) {
-            if vm.mode == .countdown {
-                CtrlBtn("SET TIME", icon: "slider.horizontal.3", color: accentBlue, filled: false, compact: compact) {
-                    withAnimation { showSetTime = true }
+            if !mini {
+                if vm.mode == .countdown {
+                    CtrlBtn("SET TIME", icon: "slider.horizontal.3", color: accentBlue, filled: false, compact: compact) {
+                        withAnimation { showSetTime = true }
+                    }
+                }
+
+                CtrlBtn("RESET", icon: "arrow.counterclockwise", color: theme.dim, filled: false, compact: compact) {
+                    withAnimation { vm.reset() }
                 }
             }
 
-            CtrlBtn("RESET", icon: "arrow.counterclockwise", color: theme.dim, filled: false, compact: compact) {
-                withAnimation { vm.reset() }
-            }
-
             if vm.state == .running {
-                CtrlBtn("PAUSE", icon: "pause.fill", color: accentOrange, filled: true, compact: compact) {
+                CtrlBtn("PAUSE", icon: "pause.fill", color: accentOrange, filled: true, compact: compact, mini: mini) {
                     vm.pause()
                 }
             } else {
@@ -347,7 +472,8 @@ struct ContentView: View {
                     icon: "play.fill",
                     color: vm.isFinished ? accentOrange : accentGreen,
                     filled: true,
-                    compact: compact
+                    compact: compact,
+                    mini: mini
                 ) {
                     if vm.isFinished { vm.reset() }
                     vm.start()
@@ -384,31 +510,32 @@ struct CtrlBtn: View {
     let color: Color
     let filled: Bool
     let compact: Bool
+    let mini: Bool
     let action: () -> Void
 
     @State private var hovered = false
 
-    init(_ label: String, icon: String, color: Color, filled: Bool, compact: Bool = false, action: @escaping () -> Void) {
+    init(_ label: String, icon: String, color: Color, filled: Bool, compact: Bool = false, mini: Bool = false, action: @escaping () -> Void) {
         self.label = label; self.icon = icon; self.color = color
-        self.filled = filled; self.compact = compact; self.action = action
+        self.filled = filled; self.compact = compact; self.mini = mini; self.action = action
     }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: compact ? 0 : 7) {
-                Image(systemName: icon).font(.system(size: 12, weight: .semibold))
+                Image(systemName: icon).font(.system(size: mini ? 10 : 12, weight: .semibold))
                 if !compact {
                     Text(label).font(.system(size: 12, weight: .semibold, design: .monospaced)).tracking(2)
                 }
             }
             .foregroundColor(filled ? .black : (hovered ? color : color.opacity(0.7)))
-            .padding(.horizontal, compact ? 11 : 20)
-            .padding(.vertical, 11)
+            .padding(.horizontal, mini ? 7 : (compact ? 11 : 20))
+            .padding(.vertical, mini ? 5 : 11)
             .background(Group {
                 if filled {
-                    RoundedRectangle(cornerRadius: 8).fill(hovered ? color.opacity(0.8) : color)
+                    RoundedRectangle(cornerRadius: mini ? 6 : 8).fill(hovered ? color.opacity(0.8) : color)
                 } else {
-                    RoundedRectangle(cornerRadius: 8).stroke(hovered ? color.opacity(0.7) : color.opacity(0.3), lineWidth: 1.5)
+                    RoundedRectangle(cornerRadius: mini ? 6 : 8).stroke(hovered ? color.opacity(0.7) : color.opacity(0.3), lineWidth: 1.5)
                 }
             })
             .scaleEffect(hovered ? 1.02 : 1)
