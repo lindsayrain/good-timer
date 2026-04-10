@@ -20,14 +20,15 @@
 - **視窗透明度**：四段透明度切換（100%/75%/50%/25%），投影場景好幫手
 - **深色 / 淺色主題**：右上角可一鍵切換，適應不同使用情境
 - **進度條顯示**：視覺化呈現計時進度
-- **動態縮放**：視窗可自由拖曳調整大小，計時器自動等比例縮放
-- **小計時模式**：視窗寬度 400pt 以下自動切換為 icon-only 精簡模式
+- **動態縮放**：視窗可自由拖曳調整大小，翻卡以原生點陣大小渲染，大尺寸下依然銳利不糊
+- **自適應 Mini 版面**：視窗縮小時自動切換成以翻卡為主角的緊湊版面
+- **自訂 title bar**：App 名稱置中顯示於紅綠燈按鈕同一水平線
 
 ---
 
 ## 下載安裝
 
-**[⬇ 下載 GoodTimer-1.2.0.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.2.0/GoodTimer-1.2.0.dmg)**
+**[⬇ 下載 GoodTimer-1.3.0.dmg](https://github.com/lindsayrain/good-timer/releases/download/v1.3.0/GoodTimer-1.3.0.dmg)**
 
 1. 下載 DMG 並開啟
 2. 將 `GoodTimer.app` 拖曳至 Applications 資料夾
