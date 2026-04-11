@@ -294,10 +294,10 @@ struct ContentView: View {
             if !mini {
                 // Mode toggle — pill with two segments
                 HStack(spacing: 0) {
-                    modeSegment(label: "COUNTDOWN", icon: "timer", isActive: vm.mode == .countdown) {
+                    modeSegment(label: "TIMER", icon: "timer", isActive: vm.mode == .countdown) {
                         if vm.mode != .countdown { withAnimation { vm.toggleMode() } }
                     }
-                    modeSegment(label: "COUNT UP", icon: "stopwatch", isActive: vm.mode == .countup) {
+                    modeSegment(label: "STOPWATCH", icon: "stopwatch", isActive: vm.mode == .countup) {
                         if vm.mode != .countup { withAnimation { vm.toggleMode() } }
                     }
                 }

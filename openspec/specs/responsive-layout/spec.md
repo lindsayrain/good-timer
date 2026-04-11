@@ -46,7 +46,7 @@ code:
 
 When the window width is less than 400pt, the UI SHALL enter compact mode:
 - The "GOOD TIMER" title text SHALL be hidden
-- Mode toggle segments (COUNTDOWN/COUNT UP) SHALL show only their SF Symbol icons ("timer"/"stopwatch"), hiding text labels
+- Mode toggle segments (TIMER/STOPWATCH) SHALL show only their SF Symbol icons ("timer"/"stopwatch"), hiding text labels
 - The always-on-top toggle SHALL show only the pin icon, hiding the "ON"/"OFF" text
 - Control bar buttons (SET TIME, RESET, PAUSE, START, RESTART) SHALL show only their icons, hiding text labels
 - Preset bar labels SHALL split the number from the unit, rendering the unit (SEC/MIN) at a smaller font size (8pt vs 11pt)
@@ -57,24 +57,25 @@ When the window width is 400pt or greater, all button labels SHALL be fully visi
 
 - **WHEN** the window width decreases below 400pt
 - **THEN** all button text labels are hidden, only SF Symbol icons remain visible
-- **THEN** the mode toggle shows a timer icon for countdown and a stopwatch icon for count up
+- **THEN** the mode toggle shows a timer icon for Timer mode and a stopwatch icon for Stopwatch mode
 
 #### Scenario: Window widened to 400pt or more
 
 - **WHEN** the window width increases to 400pt or more
 - **THEN** all button text labels are restored alongside their icons
+- **THEN** the mode toggle SHALL display "TIMER" and "STOPWATCH" as text labels
 
 
 <!-- @trace
-source: responsive-timer-layout
-updated: 2026-04-03
+source: rename-mode-labels
+updated: 2026-04-11
 code:
-  - icon.png
-  - Sources/GoodTimer/ContentView.swift
-  - Sources/GoodTimer/FlipClockView.swift
-  - Sources/GoodTimer/Resources/ChakraPetch-Bold.ttf
-  - generate-icon.swift
+  - Tests/GoodTimerTests/UpdateCheckerTests.swift
+  - Package.swift
   - Sources/GoodTimer/GoodTimerApp.swift
+  - Sources/GoodTimer/UpdateChecker.swift
+  - Sources/GoodTimer/MenuBarView.swift
+  - Sources/GoodTimer/ContentView.swift
 -->
 
 ---
