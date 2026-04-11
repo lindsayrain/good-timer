@@ -11,6 +11,11 @@ let package = Package(
             name: "GoodTimer",
             path: "Sources/GoodTimer",
             resources: [.process("Resources")]
+        ),
+        .testTarget(
+            name: "GoodTimerTests",
+            dependencies: ["GoodTimer"],
+            path: "Tests/GoodTimerTests"
         )
     ]
 )

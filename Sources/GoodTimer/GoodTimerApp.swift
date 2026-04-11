@@ -4,6 +4,7 @@ import SwiftUI
 struct GoodTimerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var vm = TimerViewModel()
+    @StateObject private var updateChecker = UpdateChecker()
 
     private var menuBarTitle: String {
         guard vm.state == .running else { return "" }
@@ -29,6 +30,8 @@ struct GoodTimerApp: App {
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(vm)
+                .environmentObject(updateChecker)
+                .task { updateChecker.checkOnLaunch() }
         } label: {
             if vm.state == .running {
                 Text(menuBarTitle)

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct MenuBarView: View {
     @EnvironmentObject var vm: TimerViewModel
+    @EnvironmentObject var updateChecker: UpdateChecker
+    @State private var showUpToDate = false
 
     private let accentBlue   = Color(red: 0.3,  green: 0.7,  blue: 1.0)
     private let accentGreen  = Color(red: 0.2,  green: 0.85, blue: 0.5)
@@ -48,6 +50,51 @@ struct MenuBarView: View {
             }
             .buttonStyle(.plain)
             .foregroundColor(accentBlue)
+
+            // Update notification
+            if updateChecker.isUpdateAvailable, let version = updateChecker.latestVersion {
+                Button {
+                    if let url = updateChecker.releaseURL {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.down.circle")
+                            .font(.system(size: 11))
+                        Text("v\(version) available — Download")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(accentBlue)
+            }
+
+            // Check for updates button
+            Button {
+                let wasAvailable = updateChecker.isUpdateAvailable
+                updateChecker.manualCheck()
+                // Watch for check completion to show "Up to date" feedback
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    if !updateChecker.isUpdateAvailable && !wasAvailable {
+                        showUpToDate = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            showUpToDate = false
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 11))
+                    Text(showUpToDate ? "Up to date" : "Check for Updates")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(.secondary)
+            .disabled(updateChecker.isChecking)
         }
         .padding(16)
         .frame(width: 240)
