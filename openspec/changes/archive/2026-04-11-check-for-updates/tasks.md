@@ -15,6 +15,11 @@
 - [x] 3.1 在 `MenuBarView.swift` 新增更新提示列：有新版時在「Open Main Window」按鈕下方顯示「v{version} available — Download」藍色文字，點擊用 `NSWorkspace.shared.open()` 開啟 release 頁面；無新版時隱藏（Menu bar popover displays update availability notification）
 - [x] 3.2 在 `MenuBarView.swift` 新增「Check for Updates」手動按鈕，放在「Open Main Window」按鈕下方，點擊觸發 `manualCheck()`，檢查中 disable 按鈕，無新版時短暫顯示「Up to date」（Menu bar popover provides manual Check for Updates button）
 
-## 4. 驗證
+## 4. Bugfix：版號讀取與 UI 位置
 
-- [x] 4.1 編譯確認無錯誤，啟動 app 驗證版本檢查功能正常運作
+- [x] 4.1 在 `UpdateChecker.swift` 新增 `appVersion()` 靜態方法，當 `Bundle.main` 無法取得版號時從專案根目錄的 `Info.plist` 讀取（Version reading falls back to Info.plist file）
+- [x] 4.2 在 `MenuBarView.swift` 將更新提示和「Check for Updates」按鈕移到「Open Main Window」按鈕上方，確保在 popover 中可見（Menu bar popover displays update availability notification）
+
+## 5. 驗證
+
+- [x] 5.1 編譯確認無錯誤，14 個單元測試通過，啟動 app 驗證版本檢查功能正常運作

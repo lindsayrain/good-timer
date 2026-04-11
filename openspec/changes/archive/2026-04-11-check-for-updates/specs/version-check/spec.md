@@ -44,6 +44,25 @@ The system SHALL store the timestamp of the last successful version check in `Us
 - **WHEN** the app launches and the last check was 25 hours ago
 - **THEN** the system SHALL perform an automatic version check
 
+### Requirement: Version reading falls back to Info.plist file
+
+The system SHALL first attempt to read the app version from `Bundle.main.infoDictionary["CFBundleShortVersionString"]`. If this returns nil (e.g., when running as an SPM debug binary without a .app bundle), the system SHALL walk up the directory tree from the executable location and attempt to read `Info.plist` from each parent directory, extracting `CFBundleShortVersionString` via `PropertyListSerialization`. If no version is found after 5 levels, the system SHALL fall back to `"0.0.0"`.
+
+#### Scenario: Running as .app bundle
+
+- **WHEN** the app runs as a properly assembled .app bundle
+- **THEN** the system SHALL read the version from `Bundle.main.infoDictionary`
+
+#### Scenario: Running as SPM debug binary
+
+- **WHEN** the app runs from `.build/debug/GoodTimer` without a .app bundle
+- **THEN** the system SHALL find and read `Info.plist` from the project root directory
+
+#### Scenario: No Info.plist found anywhere
+
+- **WHEN** neither `Bundle.main` nor any parent directory contains a readable `Info.plist`
+- **THEN** the system SHALL use `"0.0.0"` as the local version
+
 ### Requirement: Manual check bypasses throttle
 
 When the user triggers a manual version check, the system SHALL perform the check immediately regardless of the last check timestamp. The system SHALL update the last check timestamp after a manual check.

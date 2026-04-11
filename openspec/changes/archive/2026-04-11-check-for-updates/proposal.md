@@ -6,8 +6,10 @@
 
 - 新增 `UpdateChecker`：啟動時呼叫 GitHub Releases API（`GET https://api.github.com/repos/lindsayrain/good-timer/releases/latest`），比對 `tag_name` 與 `CFBundleShortVersionString` 的 semver 版號
 - 自動檢查節流：用 `UserDefaults` 記錄上次檢查時間，每 24 小時最多自動查一次
-- MenuBarView 底部新增提示：有新版時顯示「v1.x.x available — Download」藍色文字連結，點擊用 `NSWorkspace.shared.open()` 開啟 GitHub release 頁面
-- MenuBarView 底部新增「Check for Updates」手動按鈕，隨時可觸發檢查
+- MenuBarView 新增提示：有新版時顯示「v1.x.x available — Download」藍色文字連結，點擊用 `NSWorkspace.shared.open()` 開啟 GitHub release 頁面
+- MenuBarView 新增「Check for Updates」手動按鈕，隨時可觸發檢查
+- 更新提示和手動按鈕放在「Open Main Window」按鈕上方，確保在 popover 中可見
+- 版號讀取加入 fallback：當 `Bundle.main` 無法取得 `CFBundleShortVersionString` 時（SPM debug build），從專案根目錄的 `Info.plist` 讀取
 
 ## Non-Goals
 

@@ -44,7 +44,7 @@ class UpdateChecker: ObservableObject {
 
             defaults.set(Date(), forKey: Self.checkIntervalKey)
 
-            let localVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
+            let localVersion = Self.appVersion()
 
             DispatchQueue.main.async {
                 if Self.isNewer(remote: release.version, thanLocal: localVersion) {
@@ -67,6 +67,29 @@ class UpdateChecker: ObservableObject {
             return true
         }
         return Date().timeIntervalSince(lastCheck) >= throttleInterval
+    }
+
+    // MARK: - App version
+
+    static func appVersion() -> String {
+        // Try Bundle.main first (works in .app bundle)
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+            return version
+        }
+        // Fallback: read Info.plist from project root (works in debug/SPM builds)
+        let execURL = URL(fileURLWithPath: CommandLine.arguments[0])
+        // .build/debug/GoodTimer → walk up to project root
+        var dir = execURL.deletingLastPathComponent()
+        for _ in 0..<5 {
+            let plistURL = dir.appendingPathComponent("Info.plist")
+            if let data = try? Data(contentsOf: plistURL),
+               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+               let version = plist["CFBundleShortVersionString"] as? String {
+                return version
+            }
+            dir = dir.deletingLastPathComponent()
+        }
+        return "0.0.0"
     }
 
     // MARK: - Parsing

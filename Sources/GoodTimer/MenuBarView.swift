@@ -35,22 +35,6 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Open main window
-            Button {
-                NSApp.activate(ignoringOtherApps: true)
-                if let window = NSApp.windows.first(where: { $0.canBecomeMain }) {
-                    window.makeKeyAndOrderFront(nil)
-                }
-            } label: {
-                HStack {
-                    Image(systemName: "macwindow")
-                    Text("Open Main Window")
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.plain)
-            .foregroundColor(accentBlue)
-
             // Update notification
             if updateChecker.isUpdateAvailable, let version = updateChecker.latestVersion {
                 Button {
@@ -74,7 +58,6 @@ struct MenuBarView: View {
             Button {
                 let wasAvailable = updateChecker.isUpdateAvailable
                 updateChecker.manualCheck()
-                // Watch for check completion to show "Up to date" feedback
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     if !updateChecker.isUpdateAvailable && !wasAvailable {
                         showUpToDate = true
@@ -95,6 +78,22 @@ struct MenuBarView: View {
             .buttonStyle(.plain)
             .foregroundColor(.secondary)
             .disabled(updateChecker.isChecking)
+
+            // Open main window
+            Button {
+                NSApp.activate(ignoringOtherApps: true)
+                if let window = NSApp.windows.first(where: { $0.canBecomeMain }) {
+                    window.makeKeyAndOrderFront(nil)
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "macwindow")
+                    Text("Open Main Window")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(accentBlue)
         }
         .padding(16)
         .frame(width: 240)
